@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marksheet Management System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Loading Screen */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 30px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-name {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #f39c12;
+            margin-top: 20px;
+        }
+        
+        /* Main Styles */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 60px;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        .college-logo-header {
+            width: 80px;
+            height: 80px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            border: 3px solid #f39c12;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .college-logo-header img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 5px;
+        }
+        
+        .card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+        
+        /* Marksheet Styles */
+        .marksheet-container {
+            font-family: 'Times New Roman', Times, serif;
+            background-color: white;
+            padding: 30px;
+            border: 2px solid #000;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><text x="200" y="200" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="60" fill="rgba(0,0,0,0.05)" transform="rotate(-45,200,200)">SHAH COMMERCE</text></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 70% auto;
+        }
+        
+        .college-header {
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .college-logo-top {
+            margin: 0 auto 15px;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #2c3e50;
+            background-color: white;
+            padding: 10px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+        
+        .college-logo-top img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .college-name {
+            font-size: 28px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .exam-title {
+            font-size: 20px;
+            color: #666;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .academic-year {
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .marksheet-details {
+            margin-bottom: 25px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .details-row {
+            display: flex;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        
+        .detail-label {
+            width: 200px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .detail-value {
+            flex: 1;
+            color: #495057;
+        }
+        
+        .marks-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            border: 2px solid #000;
+        }
+        
+        .marks-table th {
+            border: 1px solid #000;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: bold;
+            background-color: #2c3e50;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .marks-table td {
+            border: 1px solid #000;
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 15px;
+        }
+        
+        .total-row {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+        
+        .signature-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #000;
+        }
+        
+        .signature-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 60px;
+        }
+        
+        .signature-box {
+            text-align: center;
+            width: 45%;
+        }
+        
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 80%;
+            margin: 0 auto 10px;
+            padding-top: 40px;
+        }
+        
+        .signature-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+        
+        .signature-designation {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .note-section {
+            margin-top: 40px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .note-section strong {
+            color: #e74c3c;
+        }
+        
+        .screenshot-btn {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            z-index: 1000;
+            padding: 12px 20px;
+            font-weight: 600;
+            border-radius: 50px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        /* Print Styles - FIXED */
+        @media print {
+            body * {
+                visibility: hidden;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            #printMarksheet, #printMarksheet * {
+                visibility: visible !important;
+            }
+            
+            #printMarksheet {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 30px !important;
+                background: white !important;
+            }
+            
+            .no-print, .footer, .screenshot-btn, .header-section, .card, .action-buttons {
+                display: none !important;
+            }
+            
+            .marksheet-container {
+                border: 2px solid #000 !important;
+                box-shadow: none !important;
+                margin: 0 auto !important;
+                padding: 30px !important;
+                max-width: 800px !important;
+                background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><text x="200" y="200" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="60" fill="rgba(0,0,0,0.05)" transform="rotate(-45,200,200)">SHAH COMMERCE</text></svg>') !important;
+                background-repeat: no-repeat !important;
+                background-position: center !important;
+                background-size: 70% auto !important;
+            }
+            
+            .college-logo-top {
+                border: 2px solid #000 !important;
+            }
+            
+            .college-logo-top img {
+                display: block !important;
+            }
+            
+            .marks-table th {
+                background-color: #2c3e50 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .college-name {
+                font-size: 22px;
+            }
+            
+            .exam-title {
+                font-size: 18px;
+            }
+            
+            .college-logo-top {
+                width: 90px;
+                height: 90px;
+                margin-bottom: 10px;
+            }
+            
+            .details-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .detail-label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            
+            .signature-row {
+                flex-direction: column;
+                gap: 40px;
+            }
+            
+            .signature-box {
+                width: 100%;
+            }
+            
+            .screenshot-btn {
+                bottom: 80px;
+                right: 15px;
+                padding: 10px 15px;
+            }
+            
+            .college-logo-header {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen">
+        <div class="loading-spinner"></div>
+        <div class="loading-name">Marksheet Management System</div>
+        <div class="loading-name">Design and Development By Syed Ghina Ul Hassan</div>
+        <div class="loading-text">Loading...</div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="mainContent" style="display: none;">
+        <!-- Header with College Logo -->
+        <div class="header-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <div class="college-logo-header">
+                            <img src="./assets/IMG_1188-removebg-preview.png" alt="Shah Commerce College Logo">
+                        </div>
+                        <h1 class="h3 fw-bold"><i class=""></i> Marksheet Management System</h1>
+                        <p class="mb-0">Shah Commerce College</p>
+                        <small>Professional Marksheet Generator</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="container">
+            <div class="row">
+                <!-- Input Form -->
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-user-graduate me-2"></i> Student Details
+                        </div>
+                        <div class="card-body">
+                            <form id="marksheetForm">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Student Name *</label>
+                                        <input type="text" class="form-control" id="studentName" value="" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Father's Name *</label>
+                                        <input type="text" class="form-control" id="fatherName" value="" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Worksheet No *</label>
+                                        <input type="text" class="form-control" id="worksheetNo" value="SCC/XI/2024-25/2331" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Program *</label>
+                                        <select class="form-select" id="program" required>
+                                            <option value="INTERMEDIATE" selected>INTERMEDIATE</option>
+                                            <option value="BACHELOR">BACHELOR</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Class *</label>
+                                        <select class="form-select" id="className" required>
+                                            <option value="HSC – I (XI)" selected>HSC – I (XI)</option>
+                                            <option value="HSC – II (XII)">HSC – II (XII)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Group *</label>
+                                        <select class="form-select" id="group" required>
+                                            <option value="Commerce" selected>Commerce</option>
+                                            <option value="Science">Science</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Exam Type *</label>
+                                        <select class="form-select" id="examType" required>
+                                            <option value="MID TERM EXAMINATIONS" selected>MID TERM EXAMINATIONS</option>
+                                            <option value="FINAL EXAMINATIONS">FINAL EXAMINATIONS</option>
+                                            <option value="ANNUAL EXAMINATIONS">ANNUAL EXAMINATIONS</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Academic Year *</label>
+                                        <input type="text" class="form-control" id="academicYear" value="2024-25" required>
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <h5 class="mb-3"><i class="fas fa-book me-2"></i> Subject-wise Marks</h5>
+                                
+                                <div id="subjectsContainer">
+                                    <!-- Subjects will be added here -->
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button type="button" class="btn btn-outline-primary" id="addSubjectBtn">
+                                        <i class="fas fa-plus me-1"></i> Add Subject
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-calculator me-1"></i> Generate Marksheet
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Marksheet Display -->
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-file-alt me-2"></i> Generated Marksheet
+                        </div>
+                        <div class="card-body">
+                            <div id="marksheetDisplay">
+                                <div class="text-center text-muted py-5">
+                                    <i class="fas fa-file-alt fa-4x mb-3"></i>
+                                    <h5>Marksheet Preview</h5>
+                                    <p>Fill in details and generate marksheet</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Screenshot Button -->
+        <button class="btn btn-warning screenshot-btn no-print" id="screenshotBtn">
+            <i class="fas fa-camera me-1"></i> Screenshot
+        </button>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <p class="mb-0">Design By Development <span style="color:#f39c12">Syed Ghina ul Hassan</span></p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- html2canvas -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Page loaded");
+            
+            // Hide loading screen after 1 second
+            setTimeout(function() {
+                document.getElementById('loadingScreen').style.opacity = '0';
+                setTimeout(function() {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    console.log("Main content shown");
+                }, 500);
+            }, 1000);
+            
+            // Default subjects
+            const defaultSubjects = [
+                { name: "Islamiat", marks: 42, total: 50 },
+                { name: "Urdu", marks: 87, total: 100 },
+                { name: "English", marks: 78, total: 100 },
+                { name: "Principal of Commerce", marks: 64, total: 75 },
+                { name: "Business Mathematics", marks: 48, total: 50 },
+                { name: "Economics", marks: 66, total: 75 },
+                { name: "Principles of Accounting - I", marks: 97, total: 100 }
+            ];
+            
+            // Load default subjects
+            function loadDefaultSubjects() {
+                console.log("Loading default subjects");
+                const container = document.getElementById('subjectsContainer');
+                container.innerHTML = '';
+                
+                defaultSubjects.forEach((subject, index) => {
+                    addSubjectRow(subject.name, subject.marks, subject.total);
+                });
+            }
+            
+            // Add subject row
+            function addSubjectRow(name = '', marks = '', total = 100) {
+                const container = document.getElementById('subjectsContainer');
+                const rowId = 'subject_' + Date.now();
+                
+                const row = document.createElement('div');
+                row.className = 'subject-row mb-3';
+                row.innerHTML = `
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <input type="text" class="form-control subject-name" placeholder="Subject Name" value="${name}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" class="form-control subject-marks" placeholder="Marks" value="${marks}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" class="form-control subject-total" placeholder="Total" value="${total}" required>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-danger btn-sm w-100 remove-subject">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(row);
+                
+                // Remove button event
+                row.querySelector('.remove-subject').addEventListener('click', function() {
+                    if (container.children.length > 1) {
+                        row.remove();
+                    }
+                });
+                
+                console.log("Subject row added");
+            }
+            
+            // Add subject button
+            document.getElementById('addSubjectBtn').addEventListener('click', function() {
+                console.log("Add subject clicked");
+                addSubjectRow();
+            });
+            
+            // Form submit - Generate Marksheet
+            document.getElementById('marksheetForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log("Form submitted");
+                
+                // Get form values
+                const studentName = document.getElementById('studentName').value.trim();
+                const fatherName = document.getElementById('fatherName').value.trim();
+                const worksheetNo = document.getElementById('worksheetNo').value.trim();
+                const program = document.getElementById('program').value;
+                const className = document.getElementById('className').value;
+                const group = document.getElementById('group').value;
+                const examType = document.getElementById('examType').value;
+                const academicYear = document.getElementById('academicYear').value.trim();
+                
+                // Validate required fields
+                if (!studentName || !fatherName || !worksheetNo) {
+                    alert('Please fill in all required fields!');
+                    return;
+                }
+                
+                // Get subjects data
+                const subjects = [];
+                let totalMarks = 0;
+                let maxMarks = 0;
+                let hasError = false;
+                
+                document.querySelectorAll('.subject-row').forEach((row, index) => {
+                    const name = row.querySelector('.subject-name').value.trim();
+                    const marks = parseInt(row.querySelector('.subject-marks').value) || 0;
+                    const total = parseInt(row.querySelector('.subject-total').value) || 100;
+                    
+                    if (!name) {
+                        alert(`Please enter subject name for row ${index + 1}`);
+                        hasError = true;
+                        return;
+                    }
+                    
+                    if (isNaN(marks) || marks < 0) {
+                        alert(`Invalid marks for ${name}`);
+                        hasError = true;
+                        return;
+                    }
+                    
+                    if (isNaN(total) || total <= 0) {
+                        alert(`Invalid total marks for ${name}`);
+                        hasError = true;
+                        return;
+                    }
+                    
+                    if (marks > total) {
+                        alert(`Marks cannot be greater than total for ${name}`);
+                        hasError = true;
+                        return;
+                    }
+                    
+                    subjects.push({ 
+                        name, 
+                        marks, 
+                        total,
+                        percentage: ((marks / total) * 100).toFixed(2)
+                    });
+                    totalMarks += marks;
+                    maxMarks += total;
+                });
+                
+                if (hasError) return;
+                
+                if (subjects.length === 0) {
+                    alert('Please add at least one subject!');
+                    return;
+                }
+                
+                // Calculate overall percentage
+                const overallPercentage = maxMarks > 0 ? ((totalMarks / maxMarks) * 100).toFixed(2) : 0;
+                
+                // Determine result status
+                const resultStatus = overallPercentage >= 50 ? 'PASS' : 'FAIL';
+                
+                // Number to words function
+                function numberToWords(num) {
+                    if (num === 0) return 'Zero';
+                    const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 
+                                'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 
+                                'Eighteen', 'Nineteen'];
+                    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+                    
+                    if (num < 20) return ones[num];
+                    if (num < 100) {
+                        return tens[Math.floor(num/10)] + (num%10 ? ' ' + ones[num%10] : '');
+                    }
+                    if (num < 1000) {
+                        return ones[Math.floor(num/100)] + ' Hundred' + (num%100 ? ' and ' + numberToWords(num%100) : '');
+                    }
+                    return num.toString();
+                }
+                
+                // Generate marksheet HTML
+                const marksheetHTML = `
+                    <div class="marksheet-container" id="printMarksheet">
+                        <div class="college-header">
+                            <div class="college-logo-top">
+                                <img src="./assets/IMG_1188-removebg-preview.png" alt="Shah Commerce College Logo">
+                            </div>
+                            <h1 class="college-name">SHAH COMMERCE COLLEGE</h1>
+                            <div class="exam-title">STATEMENT OF MARKS – ${examType}</div>
+                            <div class="academic-year">ACADEMIC YEAR: ${academicYear}</div>
+                        </div>
+                        
+                        <div style="text-align: right; font-weight: bold; margin-bottom: 20px; font-size: 16px;">
+                            Marksheet No: MS/${new Date().getFullYear()}${String(new Date().getMonth()+1).padStart(2,'0')}${String(new Date().getDate()).padStart(2,'0')}/001
+                        </div>
+                        
+                        <div class="marksheet-details">
+                            <div class="details-row">
+                                <div class="detail-label">Worksheet No:</div>
+                                <div class="detail-value">${worksheetNo}</div>
+                            </div>
+                            <div class="details-row">
+                                <div class="detail-label">Program:</div>
+                                <div class="detail-value">${program}</div>
+                            </div>
+                            <div class="details-row">
+                                <div class="detail-label">Class:</div>
+                                <div class="detail-value">${className}</div>
+                            </div>
+                            <div class="details-row">
+                                <div class="detail-label">Group:</div>
+                                <div class="detail-value">${group}</div>
+                            </div>
+                            <div class="details-row">
+                                <div class="detail-label">Name of Candidate:</div>
+                                <div class="detail-value"><strong>${studentName}</strong></div>
+                            </div>
+                            <div class="details-row">
+                                <div class="detail-label">Father's Name:</div>
+                                <div class="detail-value"><strong>${fatherName}</strong></div>
+                            </div>
+                        </div>
+                        
+                        <table class="marks-table">
+                            <thead>
+                                <tr>
+                                    <th width="8%">Sr. No</th>
+                                    <th width="47%">Subject Name</th>
+                                    <th width="15%">Marks Obtained</th>
+                                    <th width="15%">Total Marks</th>
+                                    <th width="15%">Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${subjects.map((subject, index) => `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td style="text-align: left; padding-left: 15px;">${subject.name}</td>
+                                        <td>${subject.marks}</td>
+                                        <td>${subject.total}</td>
+                                        <td>${subject.percentage}%</td>
+                                    </tr>
+                                `).join('')}
+                                
+                                <tr class="total-row">
+                                    <td colspan="2"><strong>TOTAL MARKS</strong></td>
+                                    <td><strong>${totalMarks}</strong></td>
+                                    <td><strong>${maxMarks}</strong></td>
+                                    <td><strong>${overallPercentage}%</strong></td>
+                                </tr>
+                                    <td colspan="5" style="text-align: left; padding-left: 15px; font-style: italic;">
+                                        <strong>In Words:</strong> ${numberToWords(totalMarks)} out of ${numberToWords(maxMarks)} 
+                                        | <strong>Result Status:</strong> <span style="color: ${resultStatus === 'PASS' ? 'green' : 'red'}; font-weight: bold;">${resultStatus}</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div class="signature-section">
+                            <div class="signature-row" style="margin-top: 40px;">
+                                <div class="signature-box">
+                                    <div class="signature-line"></div>
+                                    <div class="signature-name">Approved By</div>
+                                    <div class="signature-designation">Principal</div>
+                                </div>
+                                
+                                <div class="signature-box">
+                                    <div class="signature-line"></div>
+                                    <div class="signature-name">Controller of Examinations</div>
+                                    <div class="signature-designation">Shah Commerce College</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="note-section">
+                            <div><strong>IMPORTANT NOTES:</strong></div>
+                            <ol style="margin-top: 10px; margin-bottom: 10px; padding-left: 20px;">
+                                <li>This is an official document issued by Shah Commerce College.</li>
+                                </ol>
+                            <div style="text-align: center; margin-top: 15px; font-style: italic;">
+                                <strong>Office Seal & Signature</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons no-print">
+                        <button type="button" class="btn btn-primary" onclick="printMarksheet()">
+                            <i class="fas fa-print me-1"></i> Print Marksheet
+                        </button>
+                        <button type="button" class="btn btn-warning" onclick="takeScreenshot()">
+                            <i class="fas fa-camera me-1"></i> Take Screenshot
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                            <i class="fas fa-redo me-1"></i> Reset Form
+                        </button>
+                    </div>
+                `;
+                
+                // Display marksheet
+                document.getElementById('marksheetDisplay').innerHTML = marksheetHTML;
+                console.log("Marksheet generated with Shah Commerce logos");
+                
+                // Show success message
+                alert('Marksheet generated successfully!');
+            });
+            
+            // Print function
+            window.printMarksheet = function() {
+                console.log("Print function called");
+                const marksheetElement = document.getElementById('printMarksheet');
+                
+                if (!marksheetElement) {
+                    alert('Please generate a marksheet first!');
+                    return;
+                }
+                
+                // Open print dialog
+                window.print();
+            };
+            
+            // Screenshot function
+            window.takeScreenshot = function() {
+                console.log("Screenshot function called");
+                const marksheetElement = document.getElementById('printMarksheet');
+                
+                if (!marksheetElement) {
+                    alert('Please generate a marksheet first!');
+                    return;
+                }
+                
+                // Show loading
+                const screenshotBtn = document.getElementById('screenshotBtn');
+                const originalText = screenshotBtn.innerHTML;
+                screenshotBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Capturing...';
+                screenshotBtn.disabled = true;
+                
+                // Capture screenshot
+                html2canvas(marksheetElement, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true,
+                    logging: false
+                }).then(canvas => {
+                    // Create download link
+                    const link = document.createElement('a');
+                    const studentName = document.getElementById('studentName').value.replace(/\s+/g, '_') || 'marksheet';
+                    const fileName = `Shah_Commerce_Marksheet_${studentName}_${Date.now()}.png`;
+                    
+                    link.download = fileName;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    // Restore button
+                    screenshotBtn.innerHTML = originalText;
+                    screenshotBtn.disabled = false;
+                    
+                    // Show success
+                    alert('Screenshot saved successfully!');
+                    console.log("Screenshot captured with Shah Commerce logos");
+                    
+                }).catch(error => {
+                    console.error('Screenshot error:', error);
+                    alert('Failed to capture screenshot. Please try again.');
+                    screenshotBtn.innerHTML = originalText;
+                    screenshotBtn.disabled = false;
+                });
+            };
+            
+            // Reset form function
+            window.resetForm = function() {
+                if (confirm('Are you sure you want to reset all data?')) {
+                    document.getElementById('marksheetForm').reset();
+                    document.getElementById('marksheetDisplay').innerHTML = `
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-file-alt fa-4x mb-3"></i>
+                            <h5>Marksheet Preview</h5>
+                            <p>Fill in details and generate marksheet</p>
+                        </div>
+                    `;
+                    loadDefaultSubjects();
+                    console.log("Form reset");
+                }
+            };
+            
+            // Initialize
+            loadDefaultSubjects();
+            
+            // Initialize screenshot button
+            document.getElementById('screenshotBtn').addEventListener('click', takeScreenshot);
+            
+            console.log("All functions initialized");
+        });
+    </script>
+</body>
+</html>
