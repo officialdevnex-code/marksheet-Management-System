@@ -935,16 +935,22 @@
                         if (lastRow) {
                             if (subject.absent) {
                                 lastRow.querySelector('.absent-checkbox').checked = true;
+                                const marksInput = lastRow.querySelector('.subject-marks');
+                                marksInput.value = subject.marks;
+                                marksInput.style.backgroundColor = '#f8d7da';
                             }
                             if (subject.fail) {
                                 lastRow.querySelector('.fail-checkbox').checked = true;
+                                const marksInput = lastRow.querySelector('.subject-marks');
+                                marksInput.value = subject.marks;
+                                marksInput.style.backgroundColor = '#f8d7da';
                             }
                         }
                     }, 10);
                 });
             }
             
-            // Add subject row WITH absent and fail options
+            // Add subject row WITH absent and fail options - COMPLETELY FIXED VERSION
             function addSubjectRow(name = '', marks = '', total = 100) {
                 const container = document.getElementById('subjectsContainer');
                 const rowId = 'subject_' + Date.now();
@@ -998,32 +1004,45 @@
                     }
                 });
                 
-                // Absent/Fail checkbox event - disable marks if checked
+                // Absent checkbox event - FIXED (marks 0 nahi hoga)
                 row.querySelector('.absent-checkbox').addEventListener('change', function() {
                     const marksInput = row.querySelector('.subject-marks');
+                    const failCheckbox = row.querySelector('.fail-checkbox');
+                    
                     if (this.checked) {
-                        marksInput.value = 0;
-                        marksInput.disabled = true;
+                        // Marks ko 0 NAHI karein, sirf background color change karein
                         marksInput.style.backgroundColor = '#f8d7da';
+                        
+                        // Agar absent hai to fail checkbox uncheck karo
+                        if (failCheckbox.checked) {
+                            failCheckbox.checked = false;
+                            marksInput.style.backgroundColor = '#f8d7da';
+                        }
                     } else {
-                        marksInput.disabled = false;
                         marksInput.style.backgroundColor = '';
                     }
                 });
                 
+                // Fail checkbox event - FIXED (marks 0 nahi hoga)
                 row.querySelector('.fail-checkbox').addEventListener('change', function() {
                     const marksInput = row.querySelector('.subject-marks');
+                    const absentCheckbox = row.querySelector('.absent-checkbox');
+                    
                     if (this.checked) {
-                        marksInput.value = 0;
-                        marksInput.disabled = true;
+                        // Marks ko 0 NAHI karein, sirf background color change karein
                         marksInput.style.backgroundColor = '#f8d7da';
+                        
+                        // Agar fail hai to absent checkbox uncheck karo
+                        if (absentCheckbox.checked) {
+                            absentCheckbox.checked = false;
+                            marksInput.style.backgroundColor = '#f8d7da';
+                        }
                     } else {
-                        marksInput.disabled = false;
                         marksInput.style.backgroundColor = '';
                     }
                 });
                 
-                console.log("Subject row added with absent/fail options");
+                console.log("Subject row added with FIXED absent/fail options (marks not reset to 0)");
             }
             
             // Add subject button
@@ -1041,7 +1060,7 @@
                 }
             });
             
-            // Form submit - Generate Marksheet
+            // Form submit - Generate Marksheet - FIXED VERSION
             document.getElementById('marksheetForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 console.log("Form submitted");
@@ -1096,7 +1115,15 @@
                         return;
                     }
                     
-                    if (marks > total && !absentChecked && !failChecked) {
+                    // IMPORTANT: Agar absent ya fail checked hai, marks ko 0 NAHI karein
+                    // User jo marks daala hai wahi rahega
+                    if ((absentChecked || failChecked) && marks > total) {
+                        alert(`Marks cannot be greater than total for ${name}`);
+                        hasError = true;
+                        return;
+                    }
+                    
+                    if (!absentChecked && !failChecked && marks > total) {
                         alert(`Marks cannot be greater than total for ${name}`);
                         hasError = true;
                         return;
@@ -1112,19 +1139,19 @@
                         failOrAbsentSubjects.push(`${name} (Fail)`);
                     }
                     
-                    // If absent or fail, marks should be 0
-                    const finalMarks = (absentChecked || failChecked) ? 0 : marks;
+                    // Calculate percentage
+                    const percentage = total > 0 ? ((marks / total) * 100).toFixed(2) : "0.00";
                     
                     subjects.push({ 
                         name, 
-                        marks: finalMarks, 
+                        marks: marks, 
                         total: total,
-                        percentage: total > 0 ? ((finalMarks / total) * 100).toFixed(2) : "0.00",
+                        percentage: percentage,
                         absent: absentChecked,
                         fail: failChecked
                     });
                     
-                    totalMarks += finalMarks;
+                    totalMarks += marks;
                     maxMarks += total;
                 });
 
@@ -1138,8 +1165,7 @@
                 // Calculate overall percentage
                 const overallPercentage = maxMarks > 0 ? ((totalMarks / maxMarks) * 100).toFixed(2) : 0;
 
-                // Determine result status - YAHAN UPDATE KAR DIYA HAI
-                // Agar kisi bhi subject mein absent ya fail hai, toh overall result FAIL
+                // Determine result status
                 let resultStatus;
                 let resultColor;
                 let resultReason = "";
@@ -1175,7 +1201,7 @@
                     return num.toString();
                 }
                 
-                // Generate marksheet HTML
+                // Generate marksheet HTML - FIXED MARKS DISPLAY
                 const marksheetHTML = `
                     <div class="marksheet-container" id="printMarksheet">
                         <div class="college-header">
@@ -1231,6 +1257,8 @@
                             <tbody>
                                 ${subjects.map((subject, index) => {
                                     let remarks = `${subject.percentage}%`;
+                                    let marksDisplay = subject.marks;
+                                    
                                     if (subject.absent) {
                                         remarks = '<span style="color: red; font-weight: bold;">ABSENT</span>';
                                     } else if (subject.fail) {
@@ -1241,7 +1269,7 @@
                                         <tr>
                                             <td>${index + 1}</td>
                                             <td style="text-align: left; padding-left: 15px;">${subject.name}</td>
-                                            <td>${subject.absent || subject.fail ? '0' : subject.marks}</td>
+                                            <td><strong>${marksDisplay}</strong></td>
                                             <td>${subject.total}</td>
                                             <td>${remarks}</td>
                                         </tr>
@@ -1337,7 +1365,7 @@
                 
                 // Show success message
                 showToast('Marksheet generated successfully!');
-                console.log("Marksheet generated with absent/fail logic");
+                console.log("Marksheet generated with FIXED absent/fail logic");
             });
             
             // Save current marksheet function
@@ -1437,7 +1465,7 @@
             // Initialize screenshot button
             document.getElementById('screenshotBtn').addEventListener('click', takeScreenshot);
             
-            console.log("All functions initialized with fail/absent logic");
+            console.log("All functions initialized with COMPLETELY FIXED fail/absent logic");
         });
     </script>
 </body>
