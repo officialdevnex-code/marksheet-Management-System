@@ -346,6 +346,19 @@
             border-bottom: none;
         }
         
+        /* Subject form styles */
+        .checkbox-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+        
+        .form-check-label {
+            color: #dc3545;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
         /* Print Styles */
         @media print {
             body * {
@@ -379,7 +392,7 @@
                 margin: 0 auto !important;
                 padding: 30px !important;
                 max-width: 800px !important;
-                background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><text x="200" y="200" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="60" fill="rgba(0,0,0,0.05)" transform="rotate(-45,200,200)">SHAH COMMERCE</text></svg>') !important;
+                background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org2000/svg" width="400" height="400" viewBox="0 0 400 400"><text x="200" y="200" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="60" fill="rgba(0,0,0,0.05)" transform="rotate(-45,200,200)">SHAH COMMERCE</text></svg>') !important;
                 background-repeat: no-repeat !important;
                 background-position: center !important;
                 background-size: 70% auto !important;
@@ -468,11 +481,9 @@
                 left: 10px;
             }
             
-            .subject-row .col-md-4,
-            .subject-row .col-md-3,
-            .subject-row .col-md-2,
-            .subject-row .col-md-1 {
-                margin-bottom: 5px;
+            .checkbox-container {
+                flex-direction: column;
+                gap: 5px;
             }
         }
         
@@ -496,11 +507,8 @@
                 font-size: 13px;
             }
             
-            .subject-row .col-md-4,
-            .subject-row .col-md-3,
-            .subject-row .col-md-2,
-            .subject-row .col-md-1 {
-                margin-bottom: 5px;
+            .form-check-label {
+                font-size: 14px;
             }
         }
     </style>
@@ -616,10 +624,11 @@
                                     <table class="table table-bordered">
                                         <thead>
                                             <tr>
-                                                <th width="40%">Subject Name</th>
-                                                <th width="20%">Marks Obtained</th>
-                                                <th width="20%">Total Marks</th>
-                                                <th width="20%">Actions</th>
+                                                <th width="30%">Subject Name</th>
+                                                <th width="15%">Marks</th>
+                                                <th width="15%">Total</th>
+                                                <th width="30%">Status</th>
+                                                <th width="10%">Actions</th>
                                             </tr>
                                         </thead>
                                     </table>
@@ -919,10 +928,23 @@
                 
                 subjectsData.forEach((subject, index) => {
                     addSubjectRow(subject.name, subject.marks, subject.total);
+                    
+                    // Last added row ko dhundh ke absent/fail status set karein
+                    setTimeout(() => {
+                        const lastRow = container.lastElementChild;
+                        if (lastRow) {
+                            if (subject.absent) {
+                                lastRow.querySelector('.absent-checkbox').checked = true;
+                            }
+                            if (subject.fail) {
+                                lastRow.querySelector('.fail-checkbox').checked = true;
+                            }
+                        }
+                    }, 10);
                 });
             }
             
-            // Add subject row WITHOUT absent option
+            // Add subject row WITH absent and fail options
             function addSubjectRow(name = '', marks = '', total = 100) {
                 const container = document.getElementById('subjectsContainer');
                 const rowId = 'subject_' + Date.now();
@@ -932,14 +954,30 @@
                 row.setAttribute('data-id', rowId);
                 row.innerHTML = `
                     <div class="row g-2 align-items-center">
-                        <div class="col-md-4 col-12">
+                        <div class="col-md-3 col-12">
                             <input type="text" class="form-control subject-name" placeholder="Subject Name" value="${name}" required>
                         </div>
-                        <div class="col-md-3 col-6">
-                            <input type="number" class="form-control subject-marks" placeholder="Marks Obtained" value="${marks}" min="0" required>
+                        <div class="col-md-2 col-6">
+                            <input type="number" class="form-control subject-marks" placeholder="Marks" value="${marks}" min="0" required>
                         </div>
-                        <div class="col-md-3 col-6">
-                            <input type="number" class="form-control subject-total" placeholder="Total Marks" value="${total}" min="1" required>
+                        <div class="col-md-2 col-6">
+                            <input type="number" class="form-control subject-total" placeholder="Total" value="${total}" min="1" required>
+                        </div>
+                        <div class="col-md-3 col-12">
+                            <div class="checkbox-container">
+                                <div class="form-check">
+                                    <input class="form-check-input absent-checkbox" type="checkbox" id="absent_${rowId}">
+                                    <label class="form-check-label" for="absent_${rowId}">
+                                        Absent
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input fail-checkbox" type="checkbox" id="fail_${rowId}">
+                                    <label class="form-check-label" for="fail_${rowId}">
+                                        Fail
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-2 col-12">
                             <div class="d-flex justify-content-center">
@@ -960,7 +998,32 @@
                     }
                 });
                 
-                console.log("Subject row added without absent option");
+                // Absent/Fail checkbox event - disable marks if checked
+                row.querySelector('.absent-checkbox').addEventListener('change', function() {
+                    const marksInput = row.querySelector('.subject-marks');
+                    if (this.checked) {
+                        marksInput.value = 0;
+                        marksInput.disabled = true;
+                        marksInput.style.backgroundColor = '#f8d7da';
+                    } else {
+                        marksInput.disabled = false;
+                        marksInput.style.backgroundColor = '';
+                    }
+                });
+                
+                row.querySelector('.fail-checkbox').addEventListener('change', function() {
+                    const marksInput = row.querySelector('.subject-marks');
+                    if (this.checked) {
+                        marksInput.value = 0;
+                        marksInput.disabled = true;
+                        marksInput.style.backgroundColor = '#f8d7da';
+                    } else {
+                        marksInput.disabled = false;
+                        marksInput.style.backgroundColor = '';
+                    }
+                });
+                
+                console.log("Subject row added with absent/fail options");
             }
             
             // Add subject button
@@ -1004,11 +1067,16 @@
                 let totalMarks = 0;
                 let maxMarks = 0;
                 let hasError = false;
-                
+                let isAbsent = false;
+                let isFail = false;
+                let failOrAbsentSubjects = [];
+
                 document.querySelectorAll('.subject-row').forEach((row, index) => {
                     const name = row.querySelector('.subject-name').value.trim();
                     const marks = parseInt(row.querySelector('.subject-marks').value) || 0;
                     const total = parseInt(row.querySelector('.subject-total').value) || 100;
+                    const absentChecked = row.querySelector('.absent-checkbox').checked;
+                    const failChecked = row.querySelector('.fail-checkbox').checked;
                     
                     if (!name) {
                         alert(`Please enter subject name for row ${index + 1}`);
@@ -1028,35 +1096,66 @@
                         return;
                     }
                     
-                    if (marks > total) {
+                    if (marks > total && !absentChecked && !failChecked) {
                         alert(`Marks cannot be greater than total for ${name}`);
                         hasError = true;
                         return;
                     }
                     
+                    // Set absent or fail status
+                    if (absentChecked) {
+                        isAbsent = true;
+                        failOrAbsentSubjects.push(`${name} (Absent)`);
+                    }
+                    if (failChecked) {
+                        isFail = true;
+                        failOrAbsentSubjects.push(`${name} (Fail)`);
+                    }
+                    
+                    // If absent or fail, marks should be 0
+                    const finalMarks = (absentChecked || failChecked) ? 0 : marks;
+                    
                     subjects.push({ 
                         name, 
-                        marks: marks, 
+                        marks: finalMarks, 
                         total: total,
-                        percentage: ((marks / total) * 100).toFixed(2)
+                        percentage: total > 0 ? ((finalMarks / total) * 100).toFixed(2) : "0.00",
+                        absent: absentChecked,
+                        fail: failChecked
                     });
                     
-                    totalMarks += marks;
+                    totalMarks += finalMarks;
                     maxMarks += total;
                 });
-                
+
                 if (hasError) return;
-                
+
                 if (subjects.length === 0) {
                     alert('Please add at least one subject!');
                     return;
                 }
-                
+
                 // Calculate overall percentage
                 const overallPercentage = maxMarks > 0 ? ((totalMarks / maxMarks) * 100).toFixed(2) : 0;
+
+                // Determine result status - YAHAN UPDATE KAR DIYA HAI
+                // Agar kisi bhi subject mein absent ya fail hai, toh overall result FAIL
+                let resultStatus;
+                let resultColor;
+                let resultReason = "";
                 
-                // Determine result status
-                const resultStatus = overallPercentage >= 50 ? 'PASS' : 'FAIL';
+                if (isAbsent || isFail) {
+                    resultStatus = 'FAIL';
+                    resultColor = 'red';
+                    resultReason = ` (${failOrAbsentSubjects.join(', ')})`;
+                } else if (overallPercentage >= 50) {
+                    resultStatus = 'PASS';
+                    resultColor = 'green';
+                } else {
+                    resultStatus = 'FAIL';
+                    resultColor = 'red';
+                    resultReason = ` (Overall Percentage: ${overallPercentage}% < 50%)`;
+                }
                 
                 // Number to words function
                 function numberToWords(num) {
@@ -1130,15 +1229,24 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                ${subjects.map((subject, index) => `
-                                    <tr>
-                                        <td>${index + 1}</td>
-                                        <td style="text-align: left; padding-left: 15px;">${subject.name}</td>
-                                        <td>${subject.marks}</td>
-                                        <td>${subject.total}</td>
-                                        <td>${subject.percentage}%</td>
-                                    </tr>
-                                `).join('')}
+                                ${subjects.map((subject, index) => {
+                                    let remarks = `${subject.percentage}%`;
+                                    if (subject.absent) {
+                                        remarks = '<span style="color: red; font-weight: bold;">ABSENT</span>';
+                                    } else if (subject.fail) {
+                                        remarks = '<span style="color: red; font-weight: bold;">FAIL</span>';
+                                    }
+                                    
+                                    return `
+                                        <tr>
+                                            <td>${index + 1}</td>
+                                            <td style="text-align: left; padding-left: 15px;">${subject.name}</td>
+                                            <td>${subject.absent || subject.fail ? '0' : subject.marks}</td>
+                                            <td>${subject.total}</td>
+                                            <td>${remarks}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
                                 
                                 <tr class="total-row">
                                     <td colspan="2"><strong>TOTAL MARKS</strong></td>
@@ -1149,8 +1257,8 @@
                                 <tr>
                                     <td colspan="5" style="text-align: left; padding-left: 15px; font-style: italic;">
                                         <strong>In Words:</strong> ${numberToWords(totalMarks)} out of ${numberToWords(maxMarks)} 
-                                        | <strong>Result Status:</strong> <span style="color: ${resultStatus === 'PASS' ? 'green' : 'red'}; font-weight: bold;">
-                                        ${resultStatus}</span>
+                                        | <strong>Result Status:</strong> <span style="color: ${resultColor}; font-weight: bold;">
+                                        ${resultStatus}${resultReason}</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -1176,7 +1284,8 @@
                             <div><strong>IMPORTANT NOTES:</strong></div>
                             <ol style="margin-top: 10px; margin-bottom: 10px; padding-left: 20px;">
                                 <li>This is an official document issued by Shah Commerce College.</li>
-                                <li>Result is declared based on total percentage obtained.</li>
+                                <li>If student is absent or fails in any subject, final result will be FAIL.</li>
+                                <li>Result is declared based on total percentage obtained and subject-wise performance.</li>
                             </ol>
                             <div style="text-align: center; margin-top: 15px; font-style: italic;">
                                 <strong>Office Seal & Signature</strong>
@@ -1217,7 +1326,8 @@
                     totalMarks,
                     maxMarks,
                     overallPercentage,
-                    resultStatus: resultStatus
+                    resultStatus: resultStatus,
+                    failOrAbsentSubjects: failOrAbsentSubjects
                 };
                 
                 // Auto-save to localStorage
@@ -1227,7 +1337,7 @@
                 
                 // Show success message
                 showToast('Marksheet generated successfully!');
-                console.log("Marksheet generated without absent option");
+                console.log("Marksheet generated with absent/fail logic");
             });
             
             // Save current marksheet function
@@ -1327,7 +1437,7 @@
             // Initialize screenshot button
             document.getElementById('screenshotBtn').addEventListener('click', takeScreenshot);
             
-            console.log("All functions initialized with responsive design and data saving");
+            console.log("All functions initialized with fail/absent logic");
         });
     </script>
 </body>
