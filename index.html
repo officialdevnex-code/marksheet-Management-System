@@ -95,6 +95,7 @@
             border: none;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            overflow: hidden;
         }
         
         .card-header {
@@ -121,6 +122,10 @@
         .btn-warning {
             background-color: var(--warning-color);
             border-color: var(--warning-color);
+        }
+        
+        .btn-sm {
+            padding: 5px 10px !important;
         }
         
         /* Marksheet Styles */
@@ -317,7 +322,31 @@
             flex-wrap: wrap;
         }
         
-        /* Print Styles - FIXED */
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .toast {
+            background-color: white;
+            border-left: 5px solid var(--success-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        /* Data History Modal */
+        .history-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* Print Styles */
         @media print {
             body * {
                 visibility: hidden;
@@ -339,7 +368,8 @@
                 background: white !important;
             }
             
-            .no-print, .footer, .screenshot-btn, .header-section, .card, .action-buttons {
+            .no-print, .footer, .screenshot-btn, .header-section, .card, .action-buttons,
+            .modal, .toast-container {
                 display: none !important;
             }
             
@@ -410,11 +440,67 @@
                 bottom: 80px;
                 right: 15px;
                 padding: 10px 15px;
+                font-size: 14px;
             }
             
             .college-logo-header {
                 width: 60px;
                 height: 60px;
+            }
+            
+            .btn {
+                padding: 8px 16px !important;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .action-buttons .btn {
+                width: 100%;
+                max-width: 250px;
+            }
+            
+            .toast-container {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+            }
+            
+            .subject-row .col-md-4,
+            .subject-row .col-md-3,
+            .subject-row .col-md-2,
+            .subject-row .col-md-1 {
+                margin-bottom: 5px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .college-name {
+                font-size: 18px;
+            }
+            
+            .exam-title {
+                font-size: 16px;
+            }
+            
+            .college-logo-top {
+                width: 70px;
+                height: 70px;
+            }
+            
+            .marks-table th,
+            .marks-table td {
+                padding: 8px 5px;
+                font-size: 13px;
+            }
+            
+            .subject-row .col-md-4,
+            .subject-row .col-md-3,
+            .subject-row .col-md-2,
+            .subject-row .col-md-1 {
+                margin-bottom: 5px;
             }
         }
     </style>
@@ -427,6 +513,9 @@
         <div class="loading-name">Design and Development By Syed Ghina Ul Hassan</div>
         <div class="loading-text">Loading...</div>
     </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container"></div>
 
     <!-- Main Content -->
     <div id="mainContent" style="display: none;">
@@ -452,8 +541,13 @@
                 <!-- Input Form -->
                 <div class="col-lg-6">
                     <div class="card">
-                        <div class="card-header">
-                            <i class="fas fa-user-graduate me-2"></i> Student Details
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-user-graduate me-2"></i> Student Details
+                            </div>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="viewHistoryBtn">
+                                <i class="fas fa-history me-1"></i> View History
+                            </button>
                         </div>
                         <div class="card-body">
                             <form id="marksheetForm">
@@ -518,14 +612,32 @@
                                 
                                 <h5 class="mb-3"><i class="fas fa-book me-2"></i> Subject-wise Marks</h5>
                                 
+                                <div class="table-responsive d-none d-md-block">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th width="40%">Subject Name</th>
+                                                <th width="20%">Marks Obtained</th>
+                                                <th width="20%">Total Marks</th>
+                                                <th width="20%">Actions</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                                
                                 <div id="subjectsContainer">
                                     <!-- Subjects will be added here -->
                                 </div>
                                 
-                                <div class="d-flex justify-content-between mt-4">
-                                    <button type="button" class="btn btn-outline-primary" id="addSubjectBtn">
-                                        <i class="fas fa-plus me-1"></i> Add Subject
-                                    </button>
+                                <div class="d-flex justify-content-between mt-4 flex-wrap gap-2">
+                                    <div class="d-flex gap-2">
+                                        <button type="button" class="btn btn-outline-primary" id="addSubjectBtn">
+                                            <i class="fas fa-plus me-1"></i> Add Subject
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" id="clearSubjectsBtn">
+                                            <i class="fas fa-trash me-1"></i> Clear All
+                                        </button>
+                                    </div>
                                     <button type="submit" class="btn btn-success">
                                         <i class="fas fa-calculator me-1"></i> Generate Marksheet
                                     </button>
@@ -550,6 +662,27 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data History Modal -->
+        <div class="modal fade" id="historyModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Saved Marksheets</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="historyList">
+                            <p class="text-center text-muted">Loading history...</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-danger" id="clearHistoryBtn">Clear All History</button>
                     </div>
                 </div>
             </div>
@@ -588,6 +721,175 @@
                 }, 500);
             }, 1000);
             
+            // Initialize Bootstrap components
+            const historyModal = new bootstrap.Modal(document.getElementById('historyModal'));
+            
+            // Show toast notification
+            function showToast(message, type = 'success') {
+                const toastContainer = document.querySelector('.toast-container');
+                const toastId = 'toast-' + Date.now();
+                
+                const toastHtml = `
+                    <div id="${toastId}" class="toast" role="alert">
+                        <div class="toast-header">
+                            <strong class="me-auto">${type === 'success' ? 'Success' : 'Info'}</strong>
+                            <small>Just now</small>
+                            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                    </div>
+                `;
+                
+                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+                
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+                toast.show();
+                
+                // Remove after hide
+                toastElement.addEventListener('hidden.bs.toast', function () {
+                    toastElement.remove();
+                });
+            }
+            
+            // Save data to localStorage
+            function saveMarksheetData(data) {
+                try {
+                    let savedMarksheets = localStorage.getItem('shahCommerceMarksheets');
+                    if (!savedMarksheets) {
+                        savedMarksheets = [];
+                    } else {
+                        savedMarksheets = JSON.parse(savedMarksheets);
+                    }
+                    
+                    // Add timestamp
+                    data.timestamp = new Date().toISOString();
+                    data.id = 'ms_' + Date.now();
+                    
+                    // Add to beginning of array
+                    savedMarksheets.unshift(data);
+                    
+                    // Keep only last 50 records
+                    if (savedMarksheets.length > 50) {
+                        savedMarksheets = savedMarksheets.slice(0, 50);
+                    }
+                    
+                    localStorage.setItem('shahCommerceMarksheets', JSON.stringify(savedMarksheets));
+                    return true;
+                } catch (error) {
+                    console.error('Error saving data:', error);
+                    return false;
+                }
+            }
+            
+            // Load saved marksheets
+            function loadSavedMarksheets() {
+                try {
+                    const savedMarksheets = localStorage.getItem('shahCommerceMarksheets');
+                    if (!savedMarksheets) return [];
+                    return JSON.parse(savedMarksheets);
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    return [];
+                }
+            }
+            
+            // Clear history
+            document.getElementById('clearHistoryBtn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear all saved marksheets?')) {
+                    localStorage.removeItem('shahCommerceMarksheets');
+                    document.getElementById('historyList').innerHTML = `
+                        <p class="text-center text-muted">No saved marksheets found.</p>
+                    `;
+                    showToast('All history cleared successfully', 'info');
+                }
+            });
+            
+            // View history button
+            document.getElementById('viewHistoryBtn').addEventListener('click', function() {
+                const marksheets = loadSavedMarksheets();
+                const historyList = document.getElementById('historyList');
+                
+                if (marksheets.length === 0) {
+                    historyList.innerHTML = `
+                        <p class="text-center text-muted">No saved marksheets found.</p>
+                    `;
+                } else {
+                    let historyHtml = '<div class="list-group">';
+                    
+                    marksheets.forEach((marksheet, index) => {
+                        const date = new Date(marksheet.timestamp).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        historyHtml += `
+                            <div class="list-group-item history-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">${marksheet.studentName}</h6>
+                                        <small class="text-muted">${marksheet.fatherName} | ${marksheet.className} | ${marksheet.examType}</small>
+                                        <div class="mt-1">
+                                            <small>Worksheet: ${marksheet.worksheetNo} | Total Marks: ${marksheet.totalMarks}/${marksheet.maxMarks}</small>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <small class="text-muted d-block">${date}</small>
+                                        <button class="btn btn-sm btn-outline-primary mt-1 load-marksheet-btn" data-id="${marksheet.id}">
+                                            Load
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    historyHtml += '</div>';
+                    historyList.innerHTML = historyHtml;
+                    
+                    // Add event listeners to load buttons
+                    document.querySelectorAll('.load-marksheet-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const id = this.getAttribute('data-id');
+                            const marksheets = loadSavedMarksheets();
+                            const marksheet = marksheets.find(m => m.id === id);
+                            
+                            if (marksheet) {
+                                // Load data into form
+                                document.getElementById('studentName').value = marksheet.studentName;
+                                document.getElementById('fatherName').value = marksheet.fatherName;
+                                document.getElementById('worksheetNo').value = marksheet.worksheetNo;
+                                document.getElementById('program').value = marksheet.program;
+                                document.getElementById('className').value = marksheet.className;
+                                document.getElementById('group').value = marksheet.group;
+                                document.getElementById('examType').value = marksheet.examType;
+                                document.getElementById('academicYear').value = marksheet.academicYear;
+                                
+                                // Load subjects
+                                loadSubjectsFromData(marksheet.subjects);
+                                
+                                // Close modal
+                                historyModal.hide();
+                                
+                                // Generate marksheet
+                                setTimeout(() => {
+                                    document.getElementById('marksheetForm').dispatchEvent(new Event('submit'));
+                                }, 100);
+                                
+                                showToast('Marksheet loaded successfully');
+                            }
+                        });
+                    });
+                }
+                
+                historyModal.show();
+            });
+            
             // Default subjects
             const defaultSubjects = [
                 { name: "Islamiat", marks: 42, total: 50 },
@@ -610,28 +912,41 @@
                 });
             }
             
-            // Add subject row
+            // Load subjects from saved data
+            function loadSubjectsFromData(subjectsData) {
+                const container = document.getElementById('subjectsContainer');
+                container.innerHTML = '';
+                
+                subjectsData.forEach((subject, index) => {
+                    addSubjectRow(subject.name, subject.marks, subject.total);
+                });
+            }
+            
+            // Add subject row WITHOUT absent option
             function addSubjectRow(name = '', marks = '', total = 100) {
                 const container = document.getElementById('subjectsContainer');
                 const rowId = 'subject_' + Date.now();
                 
                 const row = document.createElement('div');
                 row.className = 'subject-row mb-3';
+                row.setAttribute('data-id', rowId);
                 row.innerHTML = `
-                    <div class="row g-2">
-                        <div class="col-md-5">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-4 col-12">
                             <input type="text" class="form-control subject-name" placeholder="Subject Name" value="${name}" required>
                         </div>
-                        <div class="col-md-3">
-                            <input type="number" class="form-control subject-marks" placeholder="Marks" value="${marks}" required>
+                        <div class="col-md-3 col-6">
+                            <input type="number" class="form-control subject-marks" placeholder="Marks Obtained" value="${marks}" min="0" required>
                         </div>
-                        <div class="col-md-3">
-                            <input type="number" class="form-control subject-total" placeholder="Total" value="${total}" required>
+                        <div class="col-md-3 col-6">
+                            <input type="number" class="form-control subject-total" placeholder="Total Marks" value="${total}" min="1" required>
                         </div>
-                        <div class="col-md-1">
-                            <button type="button" class="btn btn-danger btn-sm w-100 remove-subject">
-                                <i class="fas fa-times"></i>
-                            </button>
+                        <div class="col-md-2 col-12">
+                            <div class="d-flex justify-content-center">
+                                <button type="button" class="btn btn-danger btn-sm remove-subject w-100">
+                                    <i class="fas fa-times"></i> Remove
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -645,13 +960,22 @@
                     }
                 });
                 
-                console.log("Subject row added");
+                console.log("Subject row added without absent option");
             }
             
             // Add subject button
             document.getElementById('addSubjectBtn').addEventListener('click', function() {
                 console.log("Add subject clicked");
                 addSubjectRow();
+            });
+            
+            // Clear all subjects button
+            document.getElementById('clearSubjectsBtn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear all subjects?')) {
+                    const container = document.getElementById('subjectsContainer');
+                    container.innerHTML = '';
+                    addSubjectRow(); // Add one empty row
+                }
             });
             
             // Form submit - Generate Marksheet
@@ -712,10 +1036,11 @@
                     
                     subjects.push({ 
                         name, 
-                        marks, 
-                        total,
+                        marks: marks, 
+                        total: total,
                         percentage: ((marks / total) * 100).toFixed(2)
                     });
+                    
                     totalMarks += marks;
                     maxMarks += total;
                 });
@@ -798,10 +1123,10 @@
                             <thead>
                                 <tr>
                                     <th width="8%">Sr. No</th>
-                                    <th width="47%">Subject Name</th>
+                                    <th width="42%">Subject Name</th>
                                     <th width="15%">Marks Obtained</th>
                                     <th width="15%">Total Marks</th>
-                                    <th width="15%">Percentage</th>
+                                    <th width="20%">Remarks</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -821,9 +1146,11 @@
                                     <td><strong>${maxMarks}</strong></td>
                                     <td><strong>${overallPercentage}%</strong></td>
                                 </tr>
+                                <tr>
                                     <td colspan="5" style="text-align: left; padding-left: 15px; font-style: italic;">
                                         <strong>In Words:</strong> ${numberToWords(totalMarks)} out of ${numberToWords(maxMarks)} 
-                                        | <strong>Result Status:</strong> <span style="color: ${resultStatus === 'PASS' ? 'green' : 'red'}; font-weight: bold;">${resultStatus}</span>
+                                        | <strong>Result Status:</strong> <span style="color: ${resultStatus === 'PASS' ? 'green' : 'red'}; font-weight: bold;">
+                                        ${resultStatus}</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -849,7 +1176,8 @@
                             <div><strong>IMPORTANT NOTES:</strong></div>
                             <ol style="margin-top: 10px; margin-bottom: 10px; padding-left: 20px;">
                                 <li>This is an official document issued by Shah Commerce College.</li>
-                                </ol>
+                                <li>Result is declared based on total percentage obtained.</li>
+                            </ol>
                             <div style="text-align: center; margin-top: 15px; font-style: italic;">
                                 <strong>Office Seal & Signature</strong>
                             </div>
@@ -863,6 +1191,9 @@
                         <button type="button" class="btn btn-warning" onclick="takeScreenshot()">
                             <i class="fas fa-camera me-1"></i> Take Screenshot
                         </button>
+                        <button type="button" class="btn btn-info" onclick="saveCurrentMarksheet()">
+                            <i class="fas fa-save me-1"></i> Save Marksheet
+                        </button>
                         <button type="button" class="btn btn-secondary" onclick="resetForm()">
                             <i class="fas fa-redo me-1"></i> Reset Form
                         </button>
@@ -871,11 +1202,45 @@
                 
                 // Display marksheet
                 document.getElementById('marksheetDisplay').innerHTML = marksheetHTML;
-                console.log("Marksheet generated with Shah Commerce logos");
+                
+                // Save marksheet data
+                const marksheetData = {
+                    studentName,
+                    fatherName,
+                    worksheetNo,
+                    program,
+                    className,
+                    group,
+                    examType,
+                    academicYear,
+                    subjects,
+                    totalMarks,
+                    maxMarks,
+                    overallPercentage,
+                    resultStatus: resultStatus
+                };
+                
+                // Auto-save to localStorage
+                if (saveMarksheetData(marksheetData)) {
+                    console.log("Marksheet data saved successfully");
+                }
                 
                 // Show success message
-                alert('Marksheet generated successfully!');
+                showToast('Marksheet generated successfully!');
+                console.log("Marksheet generated without absent option");
             });
+            
+            // Save current marksheet function
+            window.saveCurrentMarksheet = function() {
+                const marksheetElement = document.getElementById('printMarksheet');
+                
+                if (!marksheetElement) {
+                    alert('Please generate a marksheet first!');
+                    return;
+                }
+                
+                showToast('Marksheet already saved automatically!');
+            };
             
             // Print function
             window.printMarksheet = function() {
@@ -928,8 +1293,8 @@
                     screenshotBtn.disabled = false;
                     
                     // Show success
-                    alert('Screenshot saved successfully!');
-                    console.log("Screenshot captured with Shah Commerce logos");
+                    showToast('Screenshot saved successfully!');
+                    console.log("Screenshot captured");
                     
                 }).catch(error => {
                     console.error('Screenshot error:', error);
@@ -951,6 +1316,7 @@
                         </div>
                     `;
                     loadDefaultSubjects();
+                    showToast('Form reset successfully', 'info');
                     console.log("Form reset");
                 }
             };
@@ -961,7 +1327,7 @@
             // Initialize screenshot button
             document.getElementById('screenshotBtn').addEventListener('click', takeScreenshot);
             
-            console.log("All functions initialized");
+            console.log("All functions initialized with responsive design and data saving");
         });
     </script>
 </body>
